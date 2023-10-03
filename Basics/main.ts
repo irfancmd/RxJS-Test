@@ -5,20 +5,22 @@ import { Observable, Observer, from } from "rxjs";
 */
 let numbers = [1, 5, 10];
 
-// Now, we'll create an observer manually using the low level "create" function
+// We will now look an example of an asynchronous Observable
 const source = new Observable((observer) => {
-  for (const num of numbers) {
-    if (num === 5) {
-      /* If stop the observer like this, it will not read next values of the observable
-         and it will not call the complete method either.
-      */
-      observer.error("An error occurred.");
+  let index = 0;
+
+  const produceValue = () => {
+    observer.next(numbers[index]);
+    index++;
+
+    if (index < numbers.length) {
+      setTimeout(produceValue, 2000);
+    } else {
+      observer.complete();
     }
+  };
 
-    observer.next(num);
-  }
-
-  observer.complete();
+  produceValue();
 });
 
 source.subscribe({
