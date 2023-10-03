@@ -8,27 +8,11 @@ let numbers = [1, 5, 10];
 // Now, we're creating an Observable that keeps track of our data source for changes.
 let source = from(numbers);
 
-/* This is an Observer that will respond to the changes in the Observable. There are multile
-   ways of creating an Observer. Here, we're creating one by defining an class.
+/* Rather than creating classes, we can also pass observer functons direcly in the
+   subscribe method by putting them inside an object.
 */
-class MyObserver implements Observer<number> {
-  // This method is called whenever the observer sees a new data
-  next(value: number) {
-    console.log(`Value: ${value}`);
-  }
-
-  // This is called whenever an error occurs
-  error(e: any) {
-    console.log(`Value: ${e}`);
-  }
-
-  // This is called when the Observer is done reading all data from the Observable
-  complete() {
-    console.log("Complete!");
-  }
-}
-
-/* Now, we're subscribing our Observable to the Observer so that it can respond to
-   changes in the Observable.
-*/
-source.subscribe(new MyObserver());
+source.subscribe({
+  next: (value) => console.log(`Value: ${value}`),
+  error: (error) => console.log(`Value: ${error}`),
+  complete: () => console.log("Complete!"),
+});
