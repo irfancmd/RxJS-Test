@@ -1,14 +1,27 @@
-import { from, merge, of, onErrorResumeNext, throwError } from "rxjs";
+import {
+  catchError,
+  from,
+  merge,
+  of,
+  onErrorResumeNext,
+  throwError,
+} from "rxjs";
 
-/* The "of" method creates an Observable with a single value. We can merge
-   the output of multiple Observables using the "onErrorResumeNext" function which will
-   ignore thrown errors and move on. The error function in the subscriber won't be called.
-*/
-const source = onErrorResumeNext(
+/* In this example, we're handling errors using the catchError operator.
+ * The merge function combines the output of multiple observables into
+   one observable.
+ */
+const source = merge(
   of(1),
   from([2, 3, 4]),
   throwError(() => new Error("Stop!")),
   of(6)
+).pipe(
+  catchError((err, _) => {
+    console.log(`Caught: ${err}`);
+
+    return of(7);
+  })
 );
 
 source.subscribe({
