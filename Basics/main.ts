@@ -1,44 +1,29 @@
-import {
-  Observable,
-  flatMap,
-  fromEvent,
-  mergeMap,
-  retry,
-  retryWhen,
-} from "rxjs";
+import { Observable, defer, from, fromEvent, mergeMap, retry } from "rxjs";
 
 let outputDiv = document.getElementById("output");
 let getMoviesBtn = document.getElementById("btn-get-movies");
 
 const click = fromEvent(getMoviesBtn, "click");
 
+/* In this section, we'll use Observables with promises. Promises and
+   observable may seem to be similar as both of them are used for dealing with
+   asynchronous operations. However, there's a core difference between them.
+   Promises just return one value or object after a certain period of time.
+   However, Observables keep returning a chain or sequence of objects. The
+   Subscribers use Observable's "next" method to get the last updated object of the
+   chain. Observables also allow us to utilize operators like map, retry, delay, filter etc.
+ */
 const load = (url: string) => {
-  /* In the last section, we used retry operator for retrying failed
-     requests. However retry doesn't give us enough control. For instance,
-     we cannot set the delay between each retry. To achieve this, we can use
-     the configure the retry operator.
-   */
-  return new Observable((observer) => {
-    let xhr = new XMLHttpRequest();
-
-    xhr.addEventListener("load", () => {
-      if (xhr.status === 200) {
-        let data = JSON.parse(xhr.responseText);
-        observer.next(data);
-      } else {
-        observer.error(xhr.statusText);
-      }
-    });
-
-    xhr.open("GET", url);
-    xhr.send();
-  }).pipe(retry({ count: 3, delay: 1500 }));
+  /* We can use the "from" method to create Observables from promises
+     Note: Observabes created from promises don't exhibit "lazy" behaviour. So invoking this
+     function without subscribing to it will still execute the fetch request. If we want the
+     "load" function to exhibit lazy behaviour, we have to return a deffered observable from
+     this function instead of directly returning an Observable created from a promise.
+  */
+  return defer(() => {
+    return from(fetch(url).then((res) => res.json()));
+  });
 };
-
-/* Note: Returning Observable makes a method "lazy". So, no matter how many times we invoke
-   that method, its operations won't run until someone subscribes to the Observable that the
-   method is returning.
-*/
 
 // This method is called by the subscriber for doing DOM manipulation
 const renderMovies = (movies: { title: string }[]) => {
