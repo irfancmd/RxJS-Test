@@ -1,31 +1,38 @@
-import {
-  catchError,
-  from,
-  merge,
-  of,
-  onErrorResumeNext,
-  throwError,
-} from "rxjs";
+import { defer, from, fromEvent, mergeMap, retry } from "rxjs";
 
-/* In this example, we're handling errors using the catchError operator.
- * The merge function combines the output of multiple observables into
-   one observable.
- */
-const source = merge(
-  of(1),
-  from([2, 3, 4]),
-  throwError(() => new Error("Stop!")),
-  of(6)
-).pipe(
-  catchError((err, _) => {
-    console.log(`Caught: ${err}`);
+let outputDiv = document.getElementById("output");
+let getMoviesBtn = document.getElementById("btn-get-movies");
 
-    return of(7);
-  })
-);
+const click = fromEvent(getMoviesBtn, "click");
 
-source.subscribe({
-  next: (value) => console.log(`Value: ${value}`),
-  error: (e) => console.log(`Error: ${e}`),
+const load = (url: string) => {
+  return defer(() => {
+    return from(
+      fetch(url).then((res) => {
+        if (res.status === 200) {
+          return res.json();
+        } else {
+          /* Note: Avoid throwing Errors in Observables as it will break the Observable chain.
+             Instead, call Observable's error method or Promise.reject method (When using promises).
+          */
+          return Promise.reject(res);
+        }
+      })
+    );
+  }).pipe(retry({ count: 3, delay: 1500 }));
+};
+
+const renderMovies = (movies: { title: string }[]) => {
+  movies.forEach((movie) => {
+    let div = document.createElement("div");
+    div.innerText = movie.title;
+
+    outputDiv.appendChild(div);
+  });
+};
+
+click.pipe(mergeMap(() => load("movies.json"))).subscribe({
+  next: (movies: { title: string }[]) => renderMovies(movies),
+  error: (e) => console.log(`ERROR: ${e}`),
   complete: () => console.log("Complete!"),
 });
