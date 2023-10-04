@@ -1,4 +1,11 @@
-import { Observable, flatMap, fromEvent, mergeMap, retry } from "rxjs";
+import {
+  Observable,
+  flatMap,
+  fromEvent,
+  mergeMap,
+  retry,
+  retryWhen,
+} from "rxjs";
 
 let outputDiv = document.getElementById("output");
 let getMoviesBtn = document.getElementById("btn-get-movies");
@@ -6,11 +13,11 @@ let getMoviesBtn = document.getElementById("btn-get-movies");
 const click = fromEvent(getMoviesBtn, "click");
 
 const load = (url: string) => {
-  /* This function will also return an observer for the json response object.
-     Note that we're not doing any heavy lifting, like DOM manipulation in the obsrvable.
-     In RxJS, Obsrvables should be lightweight. Keeping the observable only for loading data
-     will increase it's reusability. Any sort of heavy lifting should be done by the subscriber.
-  */
+  /* In the last section, we used retry operator for retrying failed
+     requests. However retry doesn't give us enough control. For instance,
+     we cannot set the delay between each retry. To achieve this, we can use
+     the configure the retry operator.
+   */
   return new Observable((observer) => {
     let xhr = new XMLHttpRequest();
 
@@ -25,7 +32,7 @@ const load = (url: string) => {
 
     xhr.open("GET", url);
     xhr.send();
-  }).pipe(retry(3)); // If error occurs, we can retry an the operation using "retry" operator.
+  }).pipe(retry({ count: 3, delay: 1500 }));
 };
 
 /* Note: Returning Observable makes a method "lazy". So, no matter how many times we invoke
