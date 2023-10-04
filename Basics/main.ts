@@ -1,31 +1,30 @@
-import { Observable, Observer, filter, from, map } from "rxjs";
+import { delay, filter, fromEvent, map } from "rxjs";
 
-/* Let' create a date source. It can be an from an api or a promise. But for simplicity,
-   let's stick to arrays.
-*/
-let numbers = [1, 5, 10];
+/* We can also create Observables from events. Here, we're creating
+   an observable that listens to the "mousemove" event of the document
+   object. We have also applied some operator functions to this Observable.
+ */
+const source = fromEvent(document, "mousemove")
+  .pipe(
+    map((e: MouseEvent) => {
+      return {
+        x: e.clientX,
+        y: e.clientY,
+      };
+    })
+  )
+  .pipe(filter((value) => value.x > 500))
+  .pipe(delay(300));
 
-const source = new Observable((observer) => {
-  let index = 0;
+let circle = document.getElementById("circle");
 
-  const produceValue = () => {
-    observer.next(numbers[index]);
-    index++;
-
-    if (index < numbers.length) {
-      setTimeout(produceValue, 1000);
-    } else {
-      observer.complete();
-    }
-  };
-
-  produceValue();
-})
-  .pipe(map((n: number) => n * 2)) // We're piping the observable data through the map operator
-  .pipe(filter((n) => n > 4)); // Then, we're piping the observable data through the filter operator
+const onNext = (value: { x: number; y: number }): void => {
+  circle.style.left = `${value.x}px`;
+  circle.style.top = `${value.y}px`;
+};
 
 source.subscribe({
-  next: (value) => console.log(`Value: ${value}`),
-  error: (error) => console.log(`Value: ${error}`),
+  next: (value) => onNext(value),
+  error: (error) => console.log(error),
   complete: () => console.log("Complete!"),
 });
